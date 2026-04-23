@@ -21,14 +21,14 @@ def mean_with_uncertainty(values, u_B=0):
 
 
 # %% 1.Generell
-U = ufloat(13.11, 0.02)  # Spannung
-I = ufloat(13.12, 0.02)  # Strom
+U = ufloat(13.11, 0.07)  # Spannung
+I = ufloat(13.12, 0.07)  # Strom
 P_zu = U * I  # zugeführte elektrische Leistung
 
-U_cool = ufloat(7.26, 0.01)  # Spannung
-I_cool = ufloat(1.63, 0.01)  # Strom
+U_cool = ufloat(7.26, 0.06)  # Spannung
+I_cool = ufloat(1.63, 0.02)  # Strom
 P_cool = U_cool * I_cool  # ????
-U_motor_cool = ufloat(231.5, 1)  # Spannung
+U_motor_cool = ufloat(231.5, 2.7)  # Spannung
 I_motor_cool = ufloat(0.38, 0.02)
 P_motor_cool = U_motor_cool * I_motor_cool
 
@@ -81,4 +81,8 @@ print(f"n_motor ={n_motor:.5f}")
 
 # %% 2.Wirkungsgrad Kältemaschine
 n_cool = P_cool / P_motor
+print(P_cool)
+print(P_motor)
 print(f"n_cool ={n_cool:.2f}")
+
+# %%
