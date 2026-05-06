@@ -11,7 +11,7 @@ sys.path.append(os.path.dirname(__file__))
 
 
 # %% definieren einer Funktion zum Einlesen und Plotten von Daten aus CSV-Dateien
-def plot_function(file_path, x_label, y_label, title, plot_label, scale_y_log=False):
+def plot_function(file_path, x_label, y_label, title, plot_label, scale_y_log=False, converting=0):
     # separator = None  # None = auto-detect
     # decimal = None  # None = auto-detect
 
@@ -60,7 +60,8 @@ def plot_function(file_path, x_label, y_label, title, plot_label, scale_y_log=Fa
                 mask = ~np.isnan(x) & ~np.isnan(y)
                 x = x[mask]
                 y = y[mask]
-
+                if converting != 0:
+                    x = x/converting
                 pairs.append((x, y, columns[i], columns[i + 1]))
 
         return pairs
@@ -365,10 +366,35 @@ plot_function(
     x_label="Zeit (s)",
     y_label="Spannung (V)",
     title="Brückengleichrichter mit Dioden (mit und ohne Glättungskondensator)",
-    plot_label=["Eingangsspannung", "Last-Ausgangsspannung"] * 2,
+    plot_label=["Eingangsspannung", "Last-Ausgangsspannung"] * 4,
     scale_y_log=False,
 )
 "need to delete the duplicates in my pairs (Eingagnsspannung wird öfter geplottet)"
+
+
+
+# %% 4.1 Plotting von Stromsteuerkennlinie
+plot_function(
+    "4.1 Stromsteuerkennlinie (noch umzurechnern in I_B)",
+    x_label="Strom I_B (mA)",
+    y_label="Strom I_C (mA)",
+    title="Stromsteuerkennlinie in Emitter-Schaltung",
+    plot_label=["Stromsteuerkennlinie"],
+    scale_y_log=False,
+    converting=100,  
+)
+
+"muss noch fitten um Beta zu bestimmen"
+
+# %% 4.2 Plotting von Ausgangskennlinienfeld
+plot_function(
+    "4.2 Ausgangskennlinienfeld",
+    x_label="Spannung U_CE (V)",
+    y_label="Strom I_C (mA)",
+    title="Ausganskennlinienfeld mit variablen U_BE",
+    plot_label=["U_BE = 0.6 V", "U_BE = 0.633 V", "U_BE = 0.666 V", "U_BE = 0.7 V"],
+    scale_y_log=False,  
+)
 
 
 # %%
