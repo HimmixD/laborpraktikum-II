@@ -11,7 +11,16 @@ sys.path.append(os.path.dirname(__file__))
 
 
 # %% definieren einer Funktion zum Einlesen und Plotten von Daten aus CSV-Dateien
-def plot_function(file_path, x_label, y_label, title, plot_label, scale_y_log=False, converting=0):
+def plot_function(
+    file_path,
+    x_label,
+    y_label,
+    title,
+    plot_label,
+    scale_y_log=False,
+    inverting=False,
+    converting=0,
+):
     # separator = None  # None = auto-detect
     # decimal = None  # None = auto-detect
 
@@ -39,7 +48,7 @@ def plot_function(file_path, x_label, y_label, title, plot_label, scale_y_log=Fa
         data = df.values
 
         pairs = []
-        if len(columns) % 2 != 0:
+        if "time" in columns[0].lower() or "zeit" in columns[0].lower():
             for i in range(1, len(columns)):
                 x = data[:, 0]
                 y = data[:, i]
@@ -47,6 +56,9 @@ def plot_function(file_path, x_label, y_label, title, plot_label, scale_y_log=Fa
                 mask = ~np.isnan(x) & ~np.isnan(y)
                 x = x[mask]
                 y = y[mask]
+
+                if inverting:
+                    y = -y
 
                 pairs.append((x, y, columns[0], columns[i]))
 
@@ -60,8 +72,9 @@ def plot_function(file_path, x_label, y_label, title, plot_label, scale_y_log=Fa
                 mask = ~np.isnan(x) & ~np.isnan(y)
                 x = x[mask]
                 y = y[mask]
+
                 if converting != 0:
-                    x = x/converting
+                    x = x / converting
                 pairs.append((x, y, columns[i], columns[i + 1]))
 
         return pairs
@@ -69,16 +82,28 @@ def plot_function(file_path, x_label, y_label, title, plot_label, scale_y_log=Fa
     # =========================
     # PLOTTING
     # =========================
-    colors = [
-        "royalblue",
-        "forestgreen",
-        "gold",
-        "firebrick",
-        "purple",
-        "brown",
-        "pink",
-        "gray",
-    ]
+    if "LED" in title:
+        colors = [
+            "royalblue",
+            "forestgreen",
+            "gold",
+            "firebrick",
+            "purple",
+            "brown",
+            "pink",
+            "gray",
+        ]
+    else:
+        colors = [
+            "royalblue",
+            "firebrick",
+            "forestgreen",
+            "darkorange",
+            "purple",
+            "darkblue",
+            "pink",
+            "gray",
+        ]
 
     def plot_data(pairs):
         plt.figure()
@@ -350,6 +375,17 @@ for i in range(0, len(columns) - 1, 2):
 
 print(f"[INFO] Fertig. {pair_count} Dateien erstellt.")
 
+# %% Merging tow CSV files
+file_1 = "4.3 kalt"
+file_2 = "4.3 warm"
+merged_file = "4.3 kalt und warm.csv"
+
+df1 = pd.read_csv(file_1, sep=",", decimal=".")
+df2 = pd.read_csv(file_2, sep=",", decimal=".")
+df2 = df2.iloc[:, 2:]
+merged_df = pd.concat([df1, df2], axis=1)
+merged_df.to_csv(merged_file, index=False)
+
 # %% Plotting von 3.1 LED Brückengleichrichter
 plot_function(
     "3.1 LED Brückengleichrichter",
@@ -358,6 +394,7 @@ plot_function(
     title="Brückengleichrichter mit LEDs",
     plot_label=["Eingangsspannung", "Last-Ausgangsspannung"],
     scale_y_log=False,
+    inverting=True,
 )
 
 # %% Plotting von 3.3 Dioden Brückengleichrichter
@@ -368,9 +405,9 @@ plot_function(
     title="Brückengleichrichter mit Dioden (mit und ohne Glättungskondensator)",
     plot_label=["Eingangsspannung", "Last-Ausgangsspannung"] * 4,
     scale_y_log=False,
+    inverting=True,
 )
 "need to delete the duplicates in my pairs (Eingagnsspannung wird öfter geplottet)"
-
 
 
 # %% 4.1 Plotting von Stromsteuerkennlinie
@@ -381,7 +418,7 @@ plot_function(
     title="Stromsteuerkennlinie in Emitter-Schaltung",
     plot_label=["Stromsteuerkennlinie"],
     scale_y_log=False,
-    converting=100,  
+    converting=100,
 )
 
 "muss noch fitten um Beta zu bestimmen"
@@ -393,15 +430,32 @@ plot_function(
     y_label="Strom I_C (mA)",
     title="Ausganskennlinienfeld mit variablen U_BE",
     plot_label=["U_BE = 0.6 V", "U_BE = 0.633 V", "U_BE = 0.666 V", "U_BE = 0.7 V"],
-    scale_y_log=False,  
+    scale_y_log=False,
+)
+
+
+# %% 4.3 Kleinsignalverstärkung
+plot_function(
+    "4.3 kalt und warm.csv",
+    x_label="Zeit (µs)",
+    y_label="Spannung (V)",
+    title="Kleinsignalverstärkung in Emitterschaltung ohne Stromgegenkopplung",
+    plot_label=[
+        "Eingangsspannung",
+        "Ausgangsspannung bei Raumtemperatur",
+        "Ausgangsspannung nach Erhitzung",
+    ],
 )
 
 
 # %%
-# --- Daten einlesen ---
-file_path = "transistor_data.txt"
 
-data = pd.read_csv(file_path, sep=";", decimal=",")
+
+# %%
+# --- Daten einlesen ---
+file_path = "4.1 Stromsteuerkennlinie (noch umzurechnern in I_B)"
+
+data = pd.read_csv(file_path, sep=",", decimal=".")
 
 # Spalten anpassen!
 I_B = data.iloc[:, 0].values  # Basisstrom
@@ -409,7 +463,7 @@ I_C = data.iloc[:, 1].values  # Kollektorstrom
 
 # --- Linearen Bereich wählen ---
 # Hier musst du evtl. rumspielen!
-mask = (I_B > 1e-6) & (I_B < 1e-4)
+mask = (I_B > 0.07) & (I_B < 0.3)
 
 I_B_fit = I_B[mask]
 I_C_fit = I_C[mask]
@@ -433,3 +487,5 @@ plt.legend()
 plt.grid()
 
 plt.show()
+
+# %%
