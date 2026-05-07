@@ -20,29 +20,31 @@ def plot_function(
     scale_y_log=False,
     inverting=False,
     converting=0,
+    exception_cols=[],
+    add_line_to_plot=0,
 ):
-    # separator = None  # None = auto-detect
-    # decimal = None  # None = auto-detect
+    "file_path: your file name (must be in same folder or provide relative path)\n"
+    "x_label, y_label, title: self-explanatory\n"
+    "plot_label: list of labels for the legend (must match number of pairs)\n"
+    "scale_y_log: if True, y-axis will be logarithmic\n"
+    "inverting: if True, y-values will be inverted (useful if u messed up the polarity)\n"
+    "converting: if not 0 then x-values will be divided by this facotr (plug in your resistor value to convert from voltage to current as in ex.4.1)\n"
+    "exception_cols: list of column indices to ignore (if u used add, you will have your input voltage twice, so you can ignore one of them here)\n"
+    "add_line_to_plot: slope of the line to be added to the plot (default: 0, meaning no line) useful for 2.1 "
 
-    # =========================
-    # AUTO LOAD FUNCTION
-    # =========================
     def load_data(file_path):
         # Separator automatisch testen
         for sep in [";", ",", "\t"]:
             try:
                 df = pd.read_csv(file_path, sep=sep)
                 if df.shape[1] > 1:
-                    print(f"[INFO] Separator erkannt: '{sep}'")
+                    print(f"Found the separator: '{sep}'")
                     return df
             except:
                 pass
 
-        raise ValueError("Konnte Datei nicht lesen. Willkommen im Chaos.")
+        raise ValueError("Could not read file. GGs.")
 
-    # =========================
-    # DATA PARSING
-    # =========================
     def extract_xy_pairs(df):
         columns = df.columns
         data = df.values
@@ -50,20 +52,22 @@ def plot_function(
         pairs = []
         if "time" in columns[0].lower() or "zeit" in columns[0].lower():
             for i in range(1, len(columns)):
-                x = data[:, 0]
-                y = data[:, i]
+                if i in exception_cols:
+                    pass
+                else:
+                    x = data[:, 0]
+                    y = data[:, i]
 
-                mask = ~np.isnan(x) & ~np.isnan(y)
-                x = x[mask]
-                y = y[mask]
+                    mask = ~np.isnan(x) & ~np.isnan(y)
+                    x = x[mask]
+                    y = y[mask]
 
-                if inverting:
-                    y = -y
+                    if inverting:
+                        y = -y
 
-                pairs.append((x, y, columns[0], columns[i]))
+                    pairs.append((x, y, columns[0], columns[i]))
 
         else:
-            # gehe spaltenweise durch (0/1, 2/3, ...)
             for i in range(0, len(columns) - 1, 2):
                 x = data[:, i]
                 y = data[:, i + 1]
@@ -79,25 +83,14 @@ def plot_function(
 
         return pairs
 
-    # =========================
-    # PLOTTING
-    # =========================
     if "LED" in title:
-        colors = [
-            "royalblue",
-            "forestgreen",
-            "gold",
-            "firebrick",
-            "purple",
-            "brown",
-            "pink",
-            "gray",
-        ]
+        # self explanatory, but you may have to adjust the colors if you had a different order of your LEDs
+        colors = ["royalblue", "forestgreen", "gold", "firebrick"]
     else:
         colors = [
             "royalblue",
-            "firebrick",
             "forestgreen",
+            "firebrick",
             "darkorange",
             "purple",
             "darkblue",
@@ -109,9 +102,20 @@ def plot_function(
         plt.figure()
 
         for i, (x, y, x_name, y_name) in enumerate(pairs):
+            # x and y_name are currently not used, but you could use them to automatically generate the plot labels if you want
             label = f"{plot_label[i]}"
             plt.plot(x, y, linestyle="-", label=label, color=colors[i])
 
+        if add_line_to_plot != 0:
+            x_line = np.linspace(min(x), max(x), 100)
+            y_line = add_line_to_plot * x_line
+            plt.plot(
+                x_line,
+                y_line,
+                color="firebrick",
+                linestyle="-",
+                label=f"y = {add_line_to_plot} * x",
+            )
         plt.xlabel(x_label)
         plt.ylabel(y_label)
         plt.title(title)
@@ -124,9 +128,6 @@ def plot_function(
         plt.tight_layout()
         plt.show()
 
-    # =========================
-    # MAIN
-    # =========================
     df = load_data(file_path)
 
     # versuch Zahlen zu erzwingen (falls Komma/Strings drin sind)
@@ -134,7 +135,7 @@ def plot_function(
 
     pairs = extract_xy_pairs(df)
 
-    print(f"[INFO] Gefundene Datensätze: {len(pairs)}")
+    print(f"Found datasets: {len(pairs)}")
 
     plot_data(pairs)
 
@@ -145,8 +146,9 @@ plot_function(
     x_label="Spannung (V)",
     y_label="Strom (mA)",
     title="Kennlinie eines Ohmschen Widerstands",
-    plot_label=["Kennlinie"],
+    plot_label=["Kennlinie eines 2 kΩ Widerstands"],
     scale_y_log=False,
+    add_line_to_plot=0.5,
 )
 # %% Fitting von 2.2 Si Diode
 # =========================
@@ -248,7 +250,7 @@ fit_text = (
     r"$I = I_s (e^{U/(n U_T)} - 1)$"
     "\n"
     + f"$I_s = ({I_s_fit:.2e} \\pm {I_s_err:.2e})$ mA\n"
-    + f"$n = {n_fit:.2f} \\pm {n_err:.2f}$"
+    + f"$n = {n_fit:.3f} \\pm {n_err:.3f}$"
 )
 
 plt.text(
@@ -376,9 +378,9 @@ for i in range(0, len(columns) - 1, 2):
 print(f"[INFO] Fertig. {pair_count} Dateien erstellt.")
 
 # %% Merging tow CSV files
-file_1 = "4.3 kalt"
-file_2 = "4.3 warm"
-merged_file = "4.3 kalt und warm.csv"
+file_1 = "4.4 kalt"
+file_2 = "4.4 warm"
+merged_file = "4.4 kalt und warm.csv"
 
 df1 = pd.read_csv(file_1, sep=",", decimal=".")
 df2 = pd.read_csv(file_2, sep=",", decimal=".")
@@ -397,31 +399,79 @@ plot_function(
     inverting=True,
 )
 
-# %% Plotting von 3.3 Dioden Brückengleichrichter
+# %% Plotting von 3.3 Dioden Brückengleichrichter und Berechnung der Brummspannung
 plot_function(
     "3.3 Brückengleichrichter mit-ohne Glättungskondi",
     x_label="Zeit (s)",
     y_label="Spannung (V)",
     title="Brückengleichrichter mit Dioden (mit und ohne Glättungskondensator)",
-    plot_label=["Eingangsspannung", "Last-Ausgangsspannung"] * 4,
-    scale_y_log=False,
+    plot_label=[
+        "Eingangsspannung",
+        "Last-Ausgangsspannung (C = 0 µF)",
+        "Last-Ausgangsspannung (C = 10 µF)",
+        "Last-Ausgangsspannung (C = 1 µF)",
+    ]
+    * 4,
+    exception_cols=[3, 5],
     inverting=True,
 )
-"need to delete the duplicates in my pairs (Eingagnsspannung wird öfter geplottet)"
-
+df = pd.read_csv(
+    "3.3 Brückengleichrichter mit-ohne Glättungskondi", sep=",", decimal="."
+)
+print(f"Brummspannung 1 µF: {max(abs(df.iloc[:, 6])) - min(abs(df.iloc[:, 6]))} V")
+print(f"Brummspannung 10 µF: {max(abs(df.iloc[:, 4])) - min(abs(df.iloc[:, 4]))} V")
 
 # %% 4.1 Plotting von Stromsteuerkennlinie
-plot_function(
-    "4.1 Stromsteuerkennlinie (noch umzurechnern in I_B)",
-    x_label="Strom I_B (mA)",
-    y_label="Strom I_C (mA)",
-    title="Stromsteuerkennlinie in Emitter-Schaltung",
-    plot_label=["Stromsteuerkennlinie"],
-    scale_y_log=False,
-    converting=100,
-)
+# --- Daten einlesen ---
+file_path = "4.1 Stromsteuerkennlinie (noch umzurechnern in I_B)"
 
-"muss noch fitten um Beta zu bestimmen"
+resistor_value = 100  # in kOhm, für die Umrechnung von U_BE zu I_B von V zu mA
+
+data = pd.read_csv(file_path, sep=",", decimal=".")
+
+# Spalten anpassen!
+U_BE = data.iloc[:, 0].values  # Basisspannung
+I_C = data.iloc[:, 1].values  # Kollektorstrom
+
+I_B = U_BE / resistor_value  # Umrechnung in Basisstrom
+
+# --- Linearen Bereich wählen ---
+mask = (I_B > 0.1 / resistor_value) & (I_B < 0.3 / resistor_value)
+
+I_B_fit = I_B[mask]
+I_C_fit = I_C[mask]
+
+# --- Linearer Fit ---
+result = linregress(I_B_fit, I_C_fit)
+slope = result.slope
+intercept = result.intercept
+std_err = result.stderr
+intercept_stdr = result.intercept_stderr
+
+beta = slope
+
+print(f"Beta (Verstärkung) = {beta:.2f} ± {std_err:.2f}")
+print(f"Intercept = {intercept:.3e} ± {intercept_stdr:.3e}")
+print(f"R^2 = {result.rvalue**2:.4f}")
+
+# --- Plot ---
+plt.figure()
+plt.plot(I_B, I_C, linestyle="-", label="Stromsteuerkennlinie")
+axis_values = np.linspace(0.0 / resistor_value, 0.35 / resistor_value, 100)
+plt.plot(
+    axis_values,
+    slope * axis_values + intercept,
+    color="red",
+    label="linearer Fit: y = A * x + B",
+)
+plt.axvspan(0.1 / resistor_value, 0.3 / resistor_value, alpha=0.2, label="Fitbereich")
+plt.xlabel("Basisstrom I_B (mA)")
+plt.ylabel("Kollektorstrom I_C (mA)")
+plt.title("Stromsteuerkennlinie in Emitterschaltung mit linearem Fit")
+plt.legend()
+plt.grid()
+
+plt.show()
 
 # %% 4.2 Plotting von Ausgangskennlinienfeld
 plot_function(
@@ -434,58 +484,40 @@ plot_function(
 )
 
 
-# %% 4.3 Kleinsignalverstärkung
+# %% 4.3 Kleinsignalverstärkung ohne Stromgegenkopplung
 plot_function(
     "4.3 kalt und warm.csv",
     x_label="Zeit (µs)",
     y_label="Spannung (V)",
     title="Kleinsignalverstärkung in Emitterschaltung ohne Stromgegenkopplung",
     plot_label=[
-        "Eingangsspannung",
-        "Ausgangsspannung bei Raumtemperatur",
-        "Ausgangsspannung nach Erhitzung",
+        "u_e",
+        "u_a bei Raumtemperatur",
+        "u_a nach Erhitzung",
     ],
 )
+df = pd.read_csv("4.3 kalt und warm.csv", sep=",", decimal=".")
+print(
+    f"Kleinsignalverstärkung Raumtemperatur: {max(df.iloc[:, 2]) / max(df.iloc[:, 1])} "
+)
+print(f"Kleinsignalverstärkung Erhitzung: {max(df.iloc[:, 3]) / max(df.iloc[:, 1])} ")
 
-
-# %%
-
-
-# %%
-# --- Daten einlesen ---
-file_path = "4.1 Stromsteuerkennlinie (noch umzurechnern in I_B)"
-
-data = pd.read_csv(file_path, sep=",", decimal=".")
-
-# Spalten anpassen!
-I_B = data.iloc[:, 0].values  # Basisstrom
-I_C = data.iloc[:, 1].values  # Kollektorstrom
-
-# --- Linearen Bereich wählen ---
-# Hier musst du evtl. rumspielen!
-mask = (I_B > 0.07) & (I_B < 0.3)
-
-I_B_fit = I_B[mask]
-I_C_fit = I_C[mask]
-
-# --- Linearer Fit ---
-slope, intercept, r_value, p_value, std_err = linregress(I_B_fit, I_C_fit)
-
-beta = slope
-
-print(f"Beta (Verstärkung) = {beta:.2f}")
-print(f"Intercept = {intercept:.3e}")
-print(f"R^2 = {r_value**2:.4f}")
-
-# --- Plot ---
-plt.figure()
-plt.scatter(I_B, I_C, label="Messdaten", s=10)
-plt.plot(I_B_fit, slope * I_B_fit + intercept, color="red", label="Fit")
-plt.xlabel("Basisstrom I_B (A)")
-plt.ylabel("Kollektorstrom I_C (A)")
-plt.legend()
-plt.grid()
-
-plt.show()
+# %% 4.4 Kleinsignalverstärkung mit Stromgegenkopplung
+plot_function(
+    "4.4 kalt und warm.csv",
+    x_label="Zeit (µs)",
+    y_label="Spannung (V)",
+    title="Kleinsignalverstärkung in Emitterschaltung mit Stromgegenkopplung",
+    plot_label=[
+        "u_e",
+        "u_a bei Raumtemperatur",
+        "u_a nach Erhitzung",
+    ],
+)
+df = pd.read_csv("4.4 kalt und warm.csv", sep=",", decimal=".")
+print(
+    f"Kleinsignalverstärkung Raumtemperatur: {max(df.iloc[:, 2]) / max(df.iloc[:, 1])} "
+)
+print(f"Kleinsignalverstärkung Erhitzung: {max(df.iloc[:, 3]) / max(df.iloc[:, 1])} ")
 
 # %%
