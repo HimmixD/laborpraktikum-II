@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 from uncertainties import ufloat
-from uncertaintier import unumpy as unp
+from uncertainties import unumpy as unp
 from uncertainties.umath import *
 import pandas as pd
 
@@ -31,10 +31,10 @@ def linear_fit(x, y, dy):
 B = ufloat(150e-3, 0.02 * 150e-3)  # Unsicherheit anpassen!
 d = 1e-3  # Probendicke in m (maybe uncertainties? ANPASSEN!)
 
-
-I = np.array([,]) * 1e-3
-UH = np.array([,]) 
-dUH = np.array([,])
+# Strom bei I_B = 0: -0.8 mV
+I = np.array([30, 24, 19, 13, 7, 2]) * 1e-3
+UH = np.array([-38.3, -31.5, -24.5, -16.9, -9.2, -4.1]) *1e-3
+dUH = np.full_like(UH, 1e-4)
 # dUH = np.full_like(UH, 1e-3) bzw dUH = 0.01 * UH oder kombo aus beiden Fehlern (ANPASSEN!)
 
 
@@ -84,20 +84,22 @@ plt.show()
 d = 1e-3  # uncertainty? ANPASSEN!
 b_conv = ufloat(48.7, 0.25) # from A to mT
 
-# ---------- Plusfeld ----------
+# bei I_B = 0: U_H = -1.1 mV , U = 0.959 V
+
+# ---------- PlusFeld ----------
 B1 = np.array([0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5]) * b_conv.n
-UH1 = np.array([,]) 
-dUH1 = np.array([,])
-U1 = np.array([,])
-dU1 = np.array([,])
+UH1 = np.array([-1.1, -5.7, -10.6, -15.8, -20.9, -25.9, -31.0, -35.0, -41.0, -45.4]) * 1e-3
+dUH1 = np.full_like(UH1, 1e-4)
+U1 = np.array([0.959, 0.960, 0.961, 0.962, 0.963, 0.964, 0.966, 0.968, 0.971, 0.973])
+dU1 = np.full_like(U1, 1e-3)
 # dUH = np.full_like(UH, 1e-3) bzw dUH = 0.01 * UH oder kombo aus beiden Fehlern (ANPASSEN!)
 
-# ---------- Minusfeld ----------
+# ---------- MinusFeld ----------
 B2 = np.array([0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5]) * - b_conv.n
-UH2 = np.array([,]) 
-dUH2 = np.array([,])
-U2 = np.array([,])
-dU2 = np.array([,])
+UH2 = np.array([-1.1, 4.9, 9.5, 14.8, 20.1, 25.4, 30.7, 35.6, 41.2, 44.7]) *1e-3
+dUH2 = np.full_like(UH2, 1e-4)
+U2 = np.array([0.961, 0.960, 0.960, 0.961, 0.962, 0.964, 0.966, 0.968, 0.970, 0.972])
+dU2 = np.full_like(U2, 1e-3)
 
 # ---------- Kombinieren ----------
 B = np.concatenate([B1, B2])
@@ -133,8 +135,8 @@ print("n =", n)
 # ---------- Plot ----------
 xfit = np.linspace(min(B), max(B), 500)
 
-plt.errorbar(B1, UH1, xerr=dB, yerr=dUH1, fmt="o", label="B positiv")
-plt.errorbar(B2, UH2, xerr=dB, yerr=dUH2, fmt="o", label="B negativ")
+plt.errorbar(B1, UH1, yerr=dUH1, fmt="o", label="B positiv")
+plt.errorbar(B2, UH2, yerr=dUH2, fmt="o", label="B negativ")
 
 plt.plot(xfit, linear(xfit, *popt), label="Fit")
 
@@ -152,8 +154,21 @@ A = 10e-3 * 1e-3  # Querschnittsfläche der Probe in m^2
 
 I = ufloat(25e-3, 0.001e-3)  # Konstantstrom, Fehler anpassen!
 
-# copy n from Aufgabe 4
-# copy data from Aufgabe 4 here, but only B, dB, U, dU but not concatenate, because we need to calculate R for each B separately
+n = ufloat(7.51, 0.15) *1e20
+# ---------- PlusFeld ----------
+B1 = np.array([0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5]) * b_conv.n
+UH1 = np.array([-1.1, -5.7, -10.6, -15.8, -20.9, -25.9, -31.0, -35.0, -41.0, -45.4]) * 1e-3
+dUH1 = np.full_like(UH1, 1e-4)
+U1 = np.array([0.959, 0.960, 0.961, 0.962, 0.963, 0.964, 0.966, 0.968, 0.971, 0.973])
+dU1 = np.full_like(U1, 1e-3)
+# dUH = np.full_like(UH, 1e-3) bzw dUH = 0.01 * UH oder kombo aus beiden Fehlern (ANPASSEN!)
+
+# ---------- MinusFeld ----------
+B2 = np.array([0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5]) * - b_conv.n
+UH2 = np.array([-1.1, 4.9, 9.5, 14.8, 20.1, 25.4, 30.7, 35.6, 41.2, 44.7]) *1e-3
+dUH2 = np.full_like(UH2, 1e-4)
+U2 = np.array([0.961, 0.960, 0.960, 0.961, 0.962, 0.964, 0.966, 0.968, 0.970, 0.972])
+dU2 = np.full_like(U2, 1e-3)
 
 R1 = U1 / I.n
 dR1 = R1 * np.sqrt((dU1 / U1) ** 2 + (I.s / I.n) ** 2)
@@ -168,9 +183,9 @@ dR2_0 = dR2[0]
 
 # ---------- Magnetwiderstand ----------
 deltaR1 = (R1 - R1_0) / R1_0
-d_deltaR1 = deltaR1 * np.sqrt((dR1 / R1) ** 2 + (dR1_0 / R1_0) ** 2)
+d_deltaR1 = abs(deltaR1 * np.sqrt((dR1 / R1) ** 2 + (dR1_0 / R1_0) ** 2))
 deltaR2 = (R2 - R2_0) / R2_0
-d_deltaR2 = deltaR2 * np.sqrt((dR2 / R2) ** 2 + (dR2_0 / R2_0) ** 2)
+d_deltaR2 = abs(deltaR2 * np.sqrt((dR2 / R2) ** 2 + (dR2_0 / R2_0) ** 2))
 
 # ---------- Leitfähigkeit ----------
 sigma1 = l / (A * R1_0)
@@ -205,18 +220,18 @@ b_conv = ufloat(48.7, 0.25) # from A to mT
 
 # ---------- Plusfeld ----------
 B1 = np.array([0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5]) * b_conv.n
-UH1 = np.array([,]) 
-dUH1 = np.array([,])
-U1 = np.array([,])
-dU1 = np.array([,])
+UH1 = np.array([-3.8, 1.6, 6.6, 11.7, 16.8, 21.9, 26.8, 31.5, 36.1, 40.4]) *1e-3
+dUH1 = np.full_like(UH1, 1e-4)
+U1 = np.array([1.447, 1.447, 1.448, 1.450, 1.452, 1.455, 1.458, 1.461, 1.465, 1.469])
+dU1 = np.full_like(U1, 1e-3)
 # dUH = np.full_like(UH, 1e-3) bzw dUH = 0.01 * UH oder kombo aus beiden Fehlern (ANPASSEN!)
 
 # ---------- Minusfeld ----------
 B2 = np.array([0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5]) * - b_conv.n
-UH2 = np.array([,]) 
-dUH2 = np.array([,])
-U2 = np.array([,])
-dU2 = np.array([,])
+UH2 = np.array([-3.7, -8.4, -13.0, -18.1, -23.3, -28.0, -32.6, -37.2, -42.0, -45.9]) *1e-3
+dUH2 = np.full_like(UH2, 1e-4)
+U2 = np.array([1.443, 1.444, 1.446, 1.447, 1.449, 1.452, 1.455, 1.459, 1.463, 1.467])
+dU2 = np.full_like(U2, 1e-3)
 
 # ---------- Kombinieren ----------
 B = np.concatenate([B1, B2])
@@ -252,8 +267,8 @@ print("p =", p)
 # ---------- Plot ----------
 xfit = np.linspace(min(B), max(B), 500)
 
-plt.errorbar(B1, UH1, xerr=dB, yerr=dUH1, fmt="o", label="B positiv")
-plt.errorbar(B2, UH2, xerr=dB, yerr=dUH2, fmt="o", label="B negativ")
+plt.errorbar(B1, UH1, yerr=dUH1, fmt="o", label="B positiv")
+plt.errorbar(B2, UH2, yerr=dUH2, fmt="o", label="B negativ")
 
 plt.plot(xfit, linear(xfit, *popt), label="Fit")
 
