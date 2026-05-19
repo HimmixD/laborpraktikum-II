@@ -87,7 +87,7 @@ b_conv = ufloat(48.7, 0.25) # from A to mT
 # bei I_B = 0: U_H = -1.1 mV , U = 0.959 V
 
 # ---------- PlusFeld ----------
-B1 = np.array([0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5]) * b_conv.n
+B1 = np.array([0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5]) * b_conv.n * 1e-3
 UH1 = np.array([-1.1, -5.7, -10.6, -15.8, -20.9, -25.9, -31.0, -35.0, -41.0, -45.4]) * 1e-3
 dUH1 = np.full_like(UH1, 1e-4)
 U1 = np.array([0.959, 0.960, 0.961, 0.962, 0.963, 0.964, 0.966, 0.968, 0.971, 0.973])
@@ -95,7 +95,7 @@ dU1 = np.full_like(U1, 1e-3)
 # dUH = np.full_like(UH, 1e-3) bzw dUH = 0.01 * UH oder kombo aus beiden Fehlern (ANPASSEN!)
 
 # ---------- MinusFeld ----------
-B2 = np.array([0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5]) * - b_conv.n
+B2 = np.array([0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5]) * - b_conv.n * 1e-3
 UH2 = np.array([-1.1, 4.9, 9.5, 14.8, 20.1, 25.4, 30.7, 35.6, 41.2, 44.7]) *1e-3
 dUH2 = np.full_like(UH2, 1e-4)
 U2 = np.array([0.961, 0.960, 0.960, 0.961, 0.962, 0.964, 0.966, 0.968, 0.970, 0.972])
@@ -156,7 +156,7 @@ I = ufloat(25e-3, 0.001e-3)  # Konstantstrom, Fehler anpassen!
 
 n = ufloat(7.51, 0.15) *1e20
 # ---------- PlusFeld ----------
-B1 = np.array([0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5]) * b_conv.n
+B1 = np.array([0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5]) * b_conv.n * 1e-3
 UH1 = np.array([-1.1, -5.7, -10.6, -15.8, -20.9, -25.9, -31.0, -35.0, -41.0, -45.4]) * 1e-3
 dUH1 = np.full_like(UH1, 1e-4)
 U1 = np.array([0.959, 0.960, 0.961, 0.962, 0.963, 0.964, 0.966, 0.968, 0.971, 0.973])
@@ -164,7 +164,7 @@ dU1 = np.full_like(U1, 1e-3)
 # dUH = np.full_like(UH, 1e-3) bzw dUH = 0.01 * UH oder kombo aus beiden Fehlern (ANPASSEN!)
 
 # ---------- MinusFeld ----------
-B2 = np.array([0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5]) * - b_conv.n
+B2 = np.array([0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5]) * - b_conv.n * 1e-3
 UH2 = np.array([-1.1, 4.9, 9.5, 14.8, 20.1, 25.4, 30.7, 35.6, 41.2, 44.7]) *1e-3
 dUH2 = np.full_like(UH2, 1e-4)
 U2 = np.array([0.961, 0.960, 0.960, 0.961, 0.962, 0.964, 0.966, 0.968, 0.970, 0.972])
@@ -327,16 +327,18 @@ plt.show()
 # %% Aufgabe 7
 # ---------- Konstantstrom ----------
 I = ufloat(25e-3, 0.001e-3)
+
+#Endwert von I_B = 3.894 A
 # Fehler anpassen!
 
 # ---------- Daten laden ----------
-data = pd.read_csv("temperatur.csv", delimiter=",", decimal=".")  
+data = pd.read_csv("Di09_PS4.csv", delimiter=",", decimal=".")  
 
 # ---------- Spaltennamen anpassen ----------
 T = data["Temperatur"].to_numpy()
 
-UH = data["UH"].to_numpy()
-U = data["U"].to_numpy()
+UH = data["Hallspannung"].to_numpy()
+U = data["Längsspannung"].to_numpy()
 
 # ---------- Spannungsfehler ----------
 dUH = np.full_like(UH, 0.001)
@@ -379,3 +381,5 @@ plt.ylabel("R [Ohm]")
 plt.grid()
 
 plt.show()
+
+# %%
